@@ -1,0 +1,4 @@
+[submodule "llama.cpp"]
+	path = llama.cpp
+	url = git@github.com:maximilian-tech/llama.cpp.git
+	branch = develop.MS-TUD.zfp-for-llms
