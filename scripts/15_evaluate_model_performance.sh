@@ -27,7 +27,7 @@ if [[ "${1:-}" == "test" ]]; then
     models=( "3.1-8B" )
 else
     #models=( "3-8B" "3-70B" "3.1-8B" "3.1-70B" )
-    models=( "3.1-8B" ) # "3.1-70B" )
+    models=( "3.1-8B" "3.1-70B" )
     #models=( "3-8B" "3.1-8B" )
 fi
 
