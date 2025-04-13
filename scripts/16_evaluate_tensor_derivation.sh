@@ -2,7 +2,7 @@
 # run_tensor_comparison.sh
 
 set -euo pipefail
-set -x
+#set -x
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 ROOT_DIR=${SCRIPT_DIR}/..
@@ -47,7 +47,7 @@ for model in "${models[@]}"; do
     for INPUT_WEIGHTS in $(eval "$search_command") ; do
         RESULT_NAME="$(basename -- "$INPUT_WEIGHTS" .gguf)"
         
-        echo "Found Model: ${INPUT_WEIGHTS}"
+        #echo "Found Model: ${INPUT_WEIGHTS}"
         
         mkdir -p ${ROOT_DIR}/{job_scripts,job_logs,job_results}/${MODEL_PREFIX}/tensor_comparison
         
