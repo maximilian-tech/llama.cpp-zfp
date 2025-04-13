@@ -5,7 +5,7 @@ IMATRICES := wi-imat no-imat
 
 # --- ZFP
 
-MODES_ZFP := rate prec acc
+MODES_ZFP := rate prec accu
 DIMS := 1 2 3 4
 
 # --- Native
@@ -24,10 +24,10 @@ COMPILE_PARAMS_ZFP := $(shell echo $(foreach z,$(MODES_ZFP),\
 								 $(z)_$(d)_$(i)))) | tr ' ' '\n' | sort | uniq)
 
 COMPILE_PARAMS_NATIVE := $(shell echo $(foreach z,$(MODES_NATIVE),\
-								 $(z)_NULL_NULL) | tr ' ' '\n' | sort | uniq)	
+								 $(z)_NULL_NULL) | tr ' ' '\n' | sort | uniq)
 
 COMPILE_PARAMS := $(COMPILE_PARAMS_ZFP) $(COMPILE_PARAMS_NATIVE)
-						
+
 # Final step targets
 COMPILE_DONE := $(addprefix $(ROOT_DIR)/job_results/compilation/compile_, $(addsuffix .done, $(COMPILE_PARAMS)))
 
@@ -59,6 +59,7 @@ $(ROOT_DIR)/job_results/compilation/compile_%.done:
 			module purge; \
 			source $(ROOT_DIR)/source_env.cpp_cpu; \
 			rm -rf /tmp/build_$*; \
+			sleep $$((RANDOM % 15)) ; \
 			cmake \
 				-B /tmp/build_$* \
 				--install-prefix=$(INSTALL_DIR) \
