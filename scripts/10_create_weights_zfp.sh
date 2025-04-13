@@ -104,8 +104,8 @@ for mode in "${modes[@]}"; do
                         IMATRIX_APPEND="NOI"
                     fi
                     
-                    RESULT_NAME="${MODEL_PREFIX}-ZFP${mode}${VALUE_MIN}:${VALUE_MAX}_${DIM}_${IMATRIX_APPEND}"
-                    RESULT_NAME_F16="${MODEL_PREFIX}-${SOURCE_TYPE}@ZFP${mode}${VALUE_MIN}:${VALUE_MAX}_${DIM}_${IMATRIX_APPEND}"
+                    RESULT_NAME="${MODEL_PREFIX}-ZFP${mode}${VALUE_MIN}:${VALUE_MAX}_${DIM}+${IMATRIX_APPEND}"
+                    RESULT_NAME_F16="${MODEL_PREFIX}-${SOURCE_TYPE}@ZFP${mode}${VALUE_MIN}:${VALUE_MAX}_${DIM}+${IMATRIX_APPEND}"
                     
                     echo "Create for ${RESULT_NAME}"
                     
