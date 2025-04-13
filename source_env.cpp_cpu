@@ -6,4 +6,5 @@ module load foss/2023b CMake Ninja
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 export PATH=${SCRIPT_DIR}/tools/llvm/bin:${PATH}
+export LD_LIBRARY_PATH=${SCRIPT_DIR}/tools/llvm/lib/x86_64-unknown-linux-gnu:${LD_LIBRARY_PATH}
 
