@@ -64,11 +64,11 @@ for model in "${models[@]}" ; do
         
         #echo "GGUF_F16_FILE_ABBR=${GGUF_F16_FILE_ABBR}"
         
-        if [[ "${RESULT_NAME}" =~ .*dim_2$ ]]; then
+        if [[ "${RESULT_NAME}" =~ .*_2_.* ]]; then
             EXECUTABLE_CLI="${ROOT_DIR}/llama.cpp-cpu/bin/llama-cli.rate.no_imat.dim_2"
-        elif [[ "${RESULT_NAME}" =~ .*dim_3$ ]]; then
+        elif [[ "${RESULT_NAME}" =~ .*_3_.* ]]; then
             EXECUTABLE_CLI="${ROOT_DIR}/llama.cpp-cpu/bin/llama-cli.rate.no_imat.dim_3"
-        elif [[ "${RESULT_NAME}" =~ .*dim_4$ ]]; then
+        elif [[ "${RESULT_NAME}" =~ .*_4_.* ]]; then
             EXECUTABLE_CLI="${ROOT_DIR}/llama.cpp-cpu/bin/llama-cli.rate.no_imat.dim_4"
         else
             EXECUTABLE_CLI="${ROOT_DIR}/llama.cpp-cpu/bin/llama-cli"
