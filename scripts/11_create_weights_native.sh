@@ -77,6 +77,8 @@ for mode in "${modes[@]}"; do
                     RESULT_NAME="${MODEL_PREFIX}-${mode}+${IMATRIX_APPEND}"
                     RESULT_NAME_F16="${MODEL_PREFIX}-${SOURCE_TYPE}@${mode}+${IMATRIX_APPEND}"
                     
+                    
+                    
                     EXECUTABLE="${ROOT_DIR}/llama.cpp-cpu/bin/llama-quantize"
                     if [[ ! -x "$EXECUTABLE" ]]; then
                         echo "Error: Executable not found: $EXECUTABLE"
@@ -88,7 +90,8 @@ for mode in "${modes[@]}"; do
                     else
                         IMATRIX_OPTION=""
                     fi
-
+                    
+                    echo "Create for ${RESULT_NAME}"
 
                     #mkdir -p ${ROOT_DIR}/{jobs,logs,result_quant,weights,weights_F16}
                     mkdir -p ${ROOT_DIR}/{job_scripts,job_logs,job_results}/${MODEL_PREFIX}/quantization
