@@ -2,77 +2,152 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import json
 import math
+plt.style.use("default")
+plt.rcParams.update({'figure.facecolor': 'white','axes.facecolor': 'white'})
+plt.rc('font', family='serif')
+plt.rcParams["font.serif"] = ["Times New Roman", "DejaVu Serif", "Bitstream Vera Serif"]
 
-def plot_overlay(input_data):
+patterns = ['///', '\\\\\\','/','\\']
+def plot_overlay_multi(input_data):
     data = pd.read_csv(input_data)
+
+    # Filter for the "global" layer
     working_data = data[data["layer"] == "global"]
-    working_data = working_data[
-        (
-                (working_data["quant_type"] == "Q4_K_M") &
+
+    #----------------------------------------------------------------------
+    # 1) DEFINE THE QUERIES FOR THE 4 SUBPLOTS
+    # Adjust these filters based on your actual distributions.
+    #----------------------------------------------------------------------
+    queries = [
+        {
+            "name": "Quantization Error compared to F16 Llama-3.1-8B",
+            "filter": (
+                          (
+                              (working_data["quant_type"] == "Q4_0")
+                              |
+                              ( (working_data["quant_type"] == "rate") &
+                                (working_data["dim"] == 3) &
+                                (working_data["threshold_low"] == 4.5) &
+                                (working_data["threshold_high"] == 4.5)
+                              )
+                          ) &
                 (working_data["imat"] == False)
-        ) | (
-                (working_data["quant_type"] == "rate") &
-                (working_data["dim"] == 3) &
-                (working_data["threshold_low"] == 4.5) &
-                (working_data["threshold_high"] == 4.5) &
-                (working_data["imat"] == False)
-        )
-        # | (
+            )
+        },
+        # {
+        #     "name": "Rate=4.5:4.5, dim=3, no imat",
+        #     "filter": (
+        #                   (
+        #                       (working_data["quant_type"] == "Q8_0")
+        #                       |
+        #                       ( (working_data["quant_type"] == "rate") &
+        #                         (working_data["dim"] == 3) &
+        #                         (working_data["threshold_low"] == 8.0) &
+        #                         (working_data["threshold_high"] == 8.0)
+        #                       )
+        #                   ) &
+        #         (working_data["imat"] == False)
+        #     ),
+        #     "xlim": [0,0.001]
+        #
+        # },
+        # {
+        #     "name": "Rate=4.5:8.0, dim=3, imat",
+        #     "filter": (
         #         (working_data["quant_type"] == "rate") &
         #         (working_data["dim"] == 3) &
         #         (working_data["threshold_low"] == 4.5) &
         #         (working_data["threshold_high"] == 8.0) &
         #         (working_data["imat"] == True)
-        # )
-        ]
+        #     )
+        # },
+        # {
+        #     "name": "Example #4 (adjust me!)",
+        #     "filter": (
+        #         (working_data["quant_type"] == "hehe")  # or "prec" or some other quant_type
+        #     )
+        # }
+    ]
 
-    # Get the histogram column (assuming two distributions)
-    barplot_data = working_data["histogram"]
-    cmap = plt.get_cmap('tab10')  # 'tab10' has 10 distinct colors
-    plt.figure(figsize=(7, 4), dpi=250)
+    #----------------------------------------------------------------------
+    # 2) CREATE A 2×2 FIGURE WITH 4 SUBPLOTS
+    #----------------------------------------------------------------------
+    #fig, axes = plt.subplots(2, 2, figsize=(10, 8), dpi=250)
+    fig, axes = plt.subplots(1, 1, figsize=(5.5, 3.8), dpi=250)
+    try:
+        axes = axes.ravel()  # Flatten the 2D array of axes for easier iteration
+    except AttributeError as e:
+        axes = [axes]
+    # Disable scientific notation on the y-axis for all subplots.
+    for ax in axes:
+        ax.ticklabel_format(style='plain', axis='y', useOffset=False)
+        # Uncomment the next line if any offset text is still visible:
+        # ax.get_yaxis().get_offset_text().set_visible(False)
 
+    cmap = plt.get_cmap('tab10')
 
-    for idx, data_str in enumerate(barplot_data):
-        # Preprocess the string so that 'inf' is handled
-        data_tmp = data_str.strip('"').replace("'", '"').replace("inf", "Infinity")
-        data_list = json.loads(data_tmp)
-        df = pd.DataFrame(data_list)
+    #----------------------------------------------------------------------
+    # 3) LOOP OVER THE 4 FILTERS AND PLOT THE NORMALIZED HISTOGRAM FOR EACH
+    #----------------------------------------------------------------------
+    for i, q in enumerate(queries):
+        # Get the subset of data corresponding to the query
+        sub_df = working_data[q["filter"]].copy()
+        barplot_data = sub_df["histogram"]
 
-        row = working_data.iloc[idx]
-        if str(row["quant_type"]) in ["rate","accu","prec"]:
-            distribution_name = f'ZFP:{str(row["quant_type"])},bpw:{str(row["threshold_low"])},chunk:{str(4**row["dim"])}'
-        else:
-            distribution_name = str(row["quant_type"])
+        # Use the current subplot axis
+        ax = axes[i]
 
-        # If any bin_end values are infinite, replace them with a virtual endpoint.
-        if df['bin_end'].apply(math.isinf).any():
-            # Find the maximum finite bin_end in the current histogram
-            max_finite = df.loc[~df['bin_end'].apply(math.isinf), 'bin_end'].max()
-            # Define an offset (adjust this value if needed)
-            offset = 0
-            # Replace infinite bin_end values with the computed virtual endpoint.
-            df.loc[df['bin_end'].apply(math.isinf), 'bin_end'] = max_finite + offset
+        for idx, data_str in enumerate(barplot_data):
+            # Preprocess the histogram data: adjust quotes and handle "inf"
+            data_tmp = data_str.strip('"').replace("'", '"').replace("inf", "Infinity")
+            data_list = json.loads(data_tmp)
+            df = pd.DataFrame(data_list)
 
-            # Calculate midpoints and bin widths
-        df['bin_mid'] = (df['bin_start'] + df['bin_end']) / 2
-        df['bin_width'] = df['bin_end'] - df['bin_start']
-        color = cmap(idx % 10)
-        plt.bar(df['bin_mid'], df['count'], width=df['bin_width'],
-                edgecolor='black', align='center',
-                color=color, alpha=0.6,
-                label=distribution_name
-                )
+            # Replace infinite bin_end values with the maximum finite value in that row
+            if df['bin_end'].apply(math.isinf).any():
+                max_finite = df.loc[~df['bin_end'].apply(math.isinf), 'bin_end'].max()
+                df.loc[df['bin_end'].apply(math.isinf), 'bin_end'] = max_finite
 
-    plt.xlabel('Absolute difference')
-    plt.ylabel('Count')
-    plt.xlim([0, 0.010])
-    plt.title('Elementwise difference to Llama-3.1-8B full precision model')
+            # Compute bin midpoint and width
+            df['bin_mid'] = (df['bin_start'] + df['bin_end']) / 2
+            df['bin_width'] = df['bin_end'] - df['bin_start']
+
+            # Compute the fraction per bin: count divided by total count
+            total_count = df['count'].sum()
+            if total_count > 0:
+                df['fraction'] = df['count'] / total_count
+            else:
+                df['fraction'] = 0
+
+            # Create a label for this histogram (only use it for the first entry)
+            row = sub_df.iloc[idx]
+            if str(row["quant_type"]) in ["rate", "accu", "prec"]:
+                distribution_name = f'{row["quant_type"].title()}:{row["threshold_low"]}-Block:{4**row["dim"]}'
+            else:
+                distribution_name = str(row["quant_type"])
+
+            color = cmap(idx % 10)
+            ax.bar(df['bin_mid'], df['fraction'], width=df['bin_width'],
+                   edgecolor='black', align='center',
+                   color=color,
+                   alpha=0.7,
+                   label=distribution_name, #if idx == 0 else None
+                   hatch=patterns[idx]
+                   )
+
+        # Set subplot title and labels.
+        ax.set_title(q["name"])
+        ax.set_xlabel("Absolute difference")
+        ax.set_ylabel("Fraction")
+        ax.set_xlim(q.get("xlim",[0, 0.01]))
+        if not sub_df.empty:
+            ax.legend(title="Quantization Type")
+
     plt.tight_layout()
-    plt.legend(title="Quantization Kind")
     plt.savefig("Llama-3.1-8B-tensor_compare_Q4_K_M_ZFP_Rate4.50:4.50_3.pdf", bbox_inches='tight', pad_inches=0.05, transparent=True)
-
-
+    plt.show()
 
 if __name__ == "__main__":
     input_data = "summary.csv"
-    plot_overlay(input_data)
+    plot_overlay_multi(input_data)
+    print("Done!")

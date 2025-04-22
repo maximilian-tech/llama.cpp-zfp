@@ -8,7 +8,7 @@ plt.rc('font', family='serif')
 plt.rcParams["font.serif"] = ["Times New Roman", "DejaVu Serif", "Bitstream Vera Serif"]
 
 df = pd.read_csv("runtimes.csv")
-
+patterns = ['//', '\\\\', '///', '\\\\\\','/','\\']
 # # --- 1a. Create a new grouping column.
 # # For rows with quant_type "rate", concatenate quant_type, dim, threshold_low, threshold_high.
 # def create_group(row):
@@ -114,12 +114,12 @@ df["group"] = df.apply(create_group, axis=1)
 # (Optional) if you wish to rename groups for better presentation, you can define a dictionary.
 rename_dict = {
     "rate": "ZFP-Rate",
-    "rate_2.0_4.0_4.0": "4 bpw,(chunk=16)",
-    "rate_2.0_8.0_8.0": "8 bpw,(chunk=16)",
-    "rate_3.0_4.0_4.0": "4 bpw,(chunk=64)",
-    "rate_3.0_8.0_8.0": "8 bpw,(chunk=64)",
-    "rate_4.0_4.0_4.0": "4 bpw,(chunk=256)",
-    "rate_4.0_8.0_8.0": "8 bpw,(chunk=256)",
+    "rate_2.0_4.0_4.0": "Rate:4-Block:16",
+    "rate_2.0_8.0_8.0": "Rate:8-Block:16",
+    "rate_3.0_4.0_4.0": "Rate:4-Block:64",
+    "rate_3.0_8.0_8.0": "Rate:8-Block:64",
+    "rate_4.0_4.0_4.0": "Rate:4-Block:256",
+    "rate_4.0_8.0_8.0": "Rate:8-Block:256",
 }
 # You can apply renaming after aggregation if needed.
 
@@ -172,16 +172,16 @@ runtime_stats["group"] = runtime_stats["group"].replace(rename_dict)
 
 # -------------------------------
 # 4. Plot: Throughput (prompt and eval) as a grouped bar plot.
-fig, ax = plt.subplots(figsize=(5.5, 3.8), dpi=250)#fig, ax = plt.subplots(figsize=(12, 6))
+fig, ax = plt.subplots(figsize=(5.5, 4.5), dpi=250)#fig, ax = plt.subplots(figsize=(12, 6))
 x = np.arange(len(throughput_stats))
 width = 0.35
 
 ax.bar(x - width/2, throughput_stats["prompt_median"], width,
        yerr=[throughput_stats["prompt_err_low"], throughput_stats["prompt_err_high"]],
-       capsize=5, label="Prefill Throughput", alpha=1)
+       capsize=5, label="Prefill Throughput", alpha=0.8, hatch="//")
 ax.bar(x + width/2, throughput_stats["eval_median"], width,
        yerr=[throughput_stats["eval_err_low"], throughput_stats["eval_err_high"]],
-       capsize=5, label="Decode Throughput", alpha=1)
+       capsize=5, label="Decode Throughput", alpha=0.8, hatch="\\\\")
 
 
 ax.set_xticks(x)
@@ -194,7 +194,7 @@ ax.set_yticks([0.1,1,10,100])
 
 ax.set_title("Throughput Llama-3.1-8B (96 threads,reps=5)")
 ax.legend()
-ax.grid(True)
+ax.grid(True, linestyle='--', linewidth=0.5)
 plt.tight_layout()
 #plt.show()
 plt.savefig("throughput-8B.pdf", transparent=True)
@@ -229,13 +229,13 @@ bar_width = 0.15
 # Compute offsets for each group.
 offsets = {grp: (i - (len(groups)-1)/2) * bar_width for i, grp in enumerate(groups)}
 
-for grp in groups:
+for pattern, grp in zip(patterns,groups):
 
     sub = runtime_stats_filtered[runtime_stats_filtered["group"] == grp]
     pos = np.array([ncore_values.index(n) for n in sub["ncore"]]) + offsets[grp]
     ax.bar(pos, sub["eval_time_median"]/1000, bar_width,
            #yerr=[sub["time_err_low"], sub["time_err_high"]],
-           capsize=5, label=grp, alpha=0.8)
+           capsize=5, label=grp, alpha=0.8,hatch=pattern)
 
 ref_scale_x = np.arange(1, 4.05, 1/24, ) - 1 + 0.3 #np.arange(24, 96, 1) / 10
 ref_scale_y = 3800/1000 / np.arange(1, 4.05, 1/24)
@@ -251,7 +251,7 @@ ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos: f"{x:g}"))
 ax.set_ylabel("Time per token [s]")
 ax.set_title("Runtime per decode token for Llama-3.1-8B")
 ax.legend(ncol=1, fontsize="small", loc='upper right')
-ax.grid(True)
+ax.grid(True, linestyle='--', linewidth=0.5)
 plt.tight_layout()
 #plt.show()
 plt.savefig("runtime_decode-8B.pdf", transparent=True)

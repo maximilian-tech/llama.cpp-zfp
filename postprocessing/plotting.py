@@ -44,7 +44,7 @@ name_mapping = {
 
 label_dict = {
     "ppl": "Perplexity (n_ctx=4096,  WikiText-2)",
-    "hellaswag": "HellaSwag Score (higher is better)",
+    "hellaswag": "HellaSwag Score [%]",
     "bpw":"Bits per weight",
     "compressed_size": "Compressed Model size (GiB)",
 }
@@ -67,7 +67,7 @@ def plot_summary_ppl(df):
 
     ]
 
-    fig, ax = plt.subplots(figsize=(5.5, 3.8), dpi=250)
+    fig, ax = plt.subplots(figsize=(5.5, 4.4), dpi=250)
     ax.set_xlabel("Llama-3.1 Compressed Model Size [GiB]")
     ax.set_ylabel(label_dict["ppl"])
     ax.set_title("Perplexity of Llama-3.1-8B/-70B")
@@ -91,7 +91,30 @@ def plot_summary_ppl(df):
             alpha=0.9
         )
 
+    # Define the endpoints for a slightly tilted line.
+    # Adjust these values to control the line's position and tilt.
+    x_start, y_start = 8, 13   # starting point of the line
+    x_end, y_end = 24.2, 2.4 # ending point of the line
+    plt.plot([x_start, x_end], [y_start, y_end],
+             color='black', linestyle='--', linewidth=2 )#, label="Model seperation")
+
+    # Option: Compute the line angle (in degrees) if you want the labels rotated with the line.
+    angle_deg  = 0
+
+    # Add a label for the left (8B Model) near the start of the line.
+    # The text can be rotated if you want it to follow the line's tilt.
+    plt.text(x_end - 5, y_end+1, "8B Model",
+             fontsize=12, rotation=angle_deg,
+             horizontalalignment='right', verticalalignment='center')
+
+    # Add a label for the right (70B Model) near the end of the line.
+    plt.text(x_start + 1.7, y_start-0.8, "70B Model",
+             fontsize=12, rotation=angle_deg,
+             horizontalalignment='left', verticalalignment='center')
+
     ax.set_xscale('log')
+    ax.set_xlim(left=2)
+    ax.set_ylim(bottom=0)
 
     # Disable scientific notation on the x-axis
     ax.set_xticks([2,5,10,20,50,100])
@@ -103,6 +126,7 @@ def plot_summary_ppl(df):
     #plt.show()
     plt.savefig("overview_8B_70B.pdf",transparent=True,dpi=300)
     plt.close()
+
 
 def plot_zfp_8b(df):
 
@@ -159,7 +183,7 @@ def plot_zfp_8b(df):
     # Disable scientific notation on the x-axis
 
     ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos: f"{x:g}"))
-
+    ax.set_xlim(left=2,right=10.3)
     ax.grid(True, linestyle='--', linewidth=0.5)
     ax.legend(title="Quantization Type", loc='upper right')
     plt.tight_layout()
@@ -218,9 +242,9 @@ def plot_zfp_8b_chunk(df):
     # Disable scientific notation on the x-axis
 
     ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos: f"{x:g}"))
-
+    ax.set_xlim(left=2,right=10.3)
     ax.grid(True, linestyle='--', linewidth=0.5)
-    ax.legend(title="Block size", loc='upper right')
+    ax.legend(title="Block Size", loc='upper right')
     plt.tight_layout()
     #plt.show()
     plt.savefig("overview_8B_zfp_chunksize.pdf",transparent=True,dpi=300)
@@ -248,14 +272,14 @@ def plt_8b_hellaswag_imatrix(df):
                         & (my_df["num_parameter"] == "8B")
                         #& (my_df["imat"] == False)
     ]
-    print(my_df)
+    #print(my_df)
     fig, ax = plt.subplots(figsize=(5.5, 3.8), dpi=250)
     ax.set_xlabel(label_dict["bpw"])
     ax.set_ylabel(label_dict["hellaswag"])
     ax.set_title("HellaSwag Score of Llama-3.1-8B")
     ax.tick_params(axis='both', which='major')
     counter = 1
-    for group in desired_order:
+    for group in reversed(desired_order):
         for imat in [True,False]:
 
             # Check if the group is present in the filtered data
@@ -271,7 +295,7 @@ def plt_8b_hellaswag_imatrix(df):
                 group_data["bits_per_weight"],
                 group_data["hellaswag"],
                 color=color_mapping[counter],
-                marker=marker_mapping.get(group, 'o'),
+                marker=marker_mapping.get(counter, 'o'),
                 label=f"{name_mapping.get(group,'unknown').replace(' Quantization','')} + {'with' if imat else 'without'} Importance",
                 edgecolors='black',
                 s=65,
@@ -283,9 +307,9 @@ def plt_8b_hellaswag_imatrix(df):
     # Disable scientific notation on the x-axis
 
     ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos: f"{x:g}"))
-
+    ax.set_xlim(left=2,right=10.3)
     ax.grid(True, linestyle='--', linewidth=0.5)
-    ax.legend(title="Quantization type", loc='lower right')
+    ax.legend(title="Quantization Type", loc='lower right')
     plt.tight_layout()
     #plt.show()
     plt.savefig("overview_8B_hellaswag.pdf",transparent=True,dpi=300)
