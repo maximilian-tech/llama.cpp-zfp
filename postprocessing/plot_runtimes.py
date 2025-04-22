@@ -125,7 +125,8 @@ rename_dict = {
 
 # -------------------------------
 # 2. Compute aggregated throughput statistics by group.
-throughput_stats = df.groupby(["group","threshold_low"],dropna=False).agg(
+throughput_stats = df[df["ncore"]==96]
+throughput_stats = throughput_stats.groupby(["group","threshold_low"],dropna=False).agg(
     prompt_median=("prompt_eval_throughput", "median"),
     prompt_min=("prompt_eval_throughput", "min"),
     prompt_max=("prompt_eval_throughput", "max"),
@@ -133,6 +134,8 @@ throughput_stats = df.groupby(["group","threshold_low"],dropna=False).agg(
     eval_min=("eval_throughput", "min"),
     eval_max=("eval_throughput", "max")
 ).reset_index()
+
+
 
 # Compute error bars: lower error = median - min, upper error = max - median.
 throughput_stats["prompt_err_low"] = throughput_stats["prompt_median"] - throughput_stats["prompt_min"]
@@ -177,11 +180,11 @@ x = np.arange(len(throughput_stats))
 width = 0.35
 
 ax.bar(x - width/2, throughput_stats["prompt_median"], width,
-       yerr=[throughput_stats["prompt_err_low"], throughput_stats["prompt_err_high"]],
-       capsize=5, label="Prefill Throughput", alpha=0.8, hatch="//")
+       #yerr=[throughput_stats["prompt_err_low"], throughput_stats["prompt_err_high"]],
+       capsize=5, label="Prefill Throughput", alpha=0.7, hatch="///")
 ax.bar(x + width/2, throughput_stats["eval_median"], width,
-       yerr=[throughput_stats["eval_err_low"], throughput_stats["eval_err_high"]],
-       capsize=5, label="Decode Throughput", alpha=0.8, hatch="\\\\")
+       #yerr=[throughput_stats["eval_err_low"], throughput_stats["eval_err_high"]],
+       capsize=5, label="Decode Throughput", alpha=0.7, hatch="\\\\\\")
 
 
 ax.set_xticks(x)
@@ -192,7 +195,7 @@ ax.set_yscale('log')
 ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos: f"{x:g}"))
 ax.set_yticks([0.1,1,10,100])
 
-ax.set_title("Throughput Llama-3.1-8B (96 threads,reps=5)")
+ax.set_title("Throughput Llama-3.1-8B (96 Threads)")
 ax.legend()
 ax.grid(True, linestyle='--', linewidth=0.5)
 plt.tight_layout()
@@ -235,7 +238,7 @@ for pattern, grp in zip(patterns,groups):
     pos = np.array([ncore_values.index(n) for n in sub["ncore"]]) + offsets[grp]
     ax.bar(pos, sub["eval_time_median"]/1000, bar_width,
            #yerr=[sub["time_err_low"], sub["time_err_high"]],
-           capsize=5, label=grp, alpha=0.8,hatch=pattern)
+           capsize=5, label=grp, alpha=0.7,hatch=pattern)
 
 ref_scale_x = np.arange(1, 4.05, 1/24, ) - 1 + 0.3 #np.arange(24, 96, 1) / 10
 ref_scale_y = 3800/1000 / np.arange(1, 4.05, 1/24)

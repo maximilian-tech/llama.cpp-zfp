@@ -122,7 +122,7 @@ def plot_overlay_multi(input_data):
             # Create a label for this histogram (only use it for the first entry)
             row = sub_df.iloc[idx]
             if str(row["quant_type"]) in ["rate", "accu", "prec"]:
-                distribution_name = f'{row["quant_type"].title()}:{row["threshold_low"]}-Block:{4**row["dim"]}'
+                distribution_name = f'{row["quant_type"].title()}:{row["threshold_low"]}-Block:{int(4**row["dim"])}'
             else:
                 distribution_name = str(row["quant_type"])
 
