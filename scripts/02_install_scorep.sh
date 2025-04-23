@@ -3,19 +3,13 @@ set -euxo pipefail
 
 # Determine the directory where the script resides
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-
+ROOT_DIR=${SCRIPT_DIR}/..
+TOOLS_DIR=${ROOT_DIR}/tools
 # Base directory for downloads and builds on /dev/shmem
-BASE_DIR="/dev/shmem/papi_scorep_build"
+BASE_DIR="/dev/shm/papi_scorep_build"
 mkdir -p "$BASE_DIR"
 
-# -------------------------------
-# PAPI configuration
-# -------------------------------
-PAPI_VERSION="7.2.0b2"
-PAPI_TARBALL_URL="https://icl.utk.edu/projects/papi/downloads/papi-${PAPI_VERSION}.tar.gz"
-PAPI_TARBALL_NAME="papi-${PAPI_VERSION}.tar.gz"
-PAPI_SRC_DIR="${BASE_DIR}/papi_gcc"
-PAPI_INSTALL_DIR="${SCRIPT_DIR}/install/papi_gcc"
+source ${ROOT_DIR}/source_env.cpp_cpu
 
 # -------------------------------
 # Score-P configuration
@@ -23,42 +17,11 @@ PAPI_INSTALL_DIR="${SCRIPT_DIR}/install/papi_gcc"
 SCOREP_VERSION="9.0"
 SCOREP_TARBALL_URL="https://perftools.pages.jsc.fz-juelich.de/cicd/scorep/tags/scorep-${SCOREP_VERSION}/scorep-${SCOREP_VERSION}.tar.gz"
 SCOREP_TARBALL_NAME="scorep-${SCOREP_VERSION}.tar.gz"
-SCOREP_SRC_DIR="${BASE_DIR}/scorep_gcc"
-SCOREP_INSTALL_DIR="${SCRIPT_DIR}/install/scorep_gcc"
-
-# Create the install directory (inside the script directory) if it does not exist
-mkdir -p "${SCRIPT_DIR}/install"
+SCOREP_SRC_DIR="${BASE_DIR}/scorep_clang"
+SCOREP_INSTALL_DIR="${TOOLS_DIR}/scorep_clang"
 
 # -----------------------------------------
-# Step 0: Download and extract PAPI source
-# -----------------------------------------
-if [ ! -d "${PAPI_SRC_DIR}" ]; then
-  echo "Downloading and extracting PAPI (${PAPI_VERSION})..."
-  mkdir -p "${PAPI_SRC_DIR}"
-  cd "$BASE_DIR"
-  wget "$PAPI_TARBALL_URL" -O "$PAPI_TARBALL_NAME"
-  tar -xf "$PAPI_TARBALL_NAME" -C "${PAPI_SRC_DIR}" --strip-components=1
-  cd "${SCRIPT_DIR}"
-else
-  echo "PAPI source already exists at ${PAPI_SRC_DIR}"
-fi
-
-# -----------------------------------------
-# Step 1: Build and Install PAPI with GCC
-# -----------------------------------------
-if [ ! -d "${PAPI_INSTALL_DIR}" ]; then
-  echo "Building and installing PAPI..."
-  cd "${PAPI_SRC_DIR}/src"
-  ./configure --prefix="${PAPI_INSTALL_DIR}"
-  make -j 4
-  make install
-  cd "${SCRIPT_DIR}"
-else
-  echo "PAPI already installed at ${PAPI_INSTALL_DIR}"
-fi
-
-# -----------------------------------------
-# Step 2: Download and extract Score-P source
+# Step 0: Download and extract Score-P source
 # -----------------------------------------
 if [ ! -d "${SCOREP_SRC_DIR}" ]; then
   echo "Downloading and extracting Score-P (${SCOREP_VERSION})..."
@@ -72,7 +35,7 @@ else
 fi
 
 # -----------------------------------------
-# Step 3: Build and Install Score-P with GCC
+# Step 1: Build and Install Score-P with Clang
 # -----------------------------------------
 if [ ! -d "${SCOREP_INSTALL_DIR}" ]; then
   echo "Building and installing Score-P..."
@@ -84,10 +47,9 @@ if [ ! -d "${SCOREP_INSTALL_DIR}" ]; then
     --with-libgotcha=download \
     --with-libunwind=download \
     --with-libbfd=download \
-    --with-papi="${PAPI_INSTALL_DIR}" \
-    --with-nocross-compiler-suite=gcc
+    --with-nocross-compiler-suite=clang
 
-  make -j 4
+  make -j 8
   make install
   cd "${SCRIPT_DIR}"
 else
