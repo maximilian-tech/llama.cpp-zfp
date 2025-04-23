@@ -24,7 +24,7 @@ if [[ "${1:-}" == "test" ]]; then
     cores=( 96 )
 else
     models=( "3.1-8B" )
-    cores=( 24 48 72 96 )
+    cores=( 1 24 48 72 96 )
     modes=(
         ZFPrate4.00:4.00_2_NOI
         ZFPrate4.00:4.00_3_NOI
@@ -76,6 +76,15 @@ for model in "${models[@]}" ; do
         echo "Create for ${RESULT_NAME}"
         
         for NCPUS in "${cores[@]}" ; do
+
+            if [[ $NCPUS = 1 ]] && [[ "$INPUT_WEIGHTS" =~ ^ZFP.* ]]; then
+                CLI_PROMPT_COPY=${CLI_PROMPT:0:13}
+                NPREDICT=3
+            else
+                CLI_PROMPT_COPY=${CLI_PROMPT}
+                NPREDICT=200
+            fi
+
             for i in {1..5}; do
                 #JOB_SCRIPT="${MODEL_SOURCEDIR}/jobs_eval_performance/job_script_${OUTPUT_NAME}_n${NCPUS}_i${i}.sh"
                 JOB_SCRIPT="${ROOT_DIR}/job_scripts/${MODEL_PREFIX}/runtime_performance/${RESULT_NAME}_n${NCPUS}_i${i}.sbatch"
@@ -120,8 +129,8 @@ time srun --cpu-bind=cores -c 104 -- \
     --ctx-size 4096 \
     -m "${GGUF_F16_FILE}" \
     --repeat_penalty 1.0 \
-    --prompt "${CLI_PROMPT}" \
-    --predict 200 \
+    --prompt "${CLI_PROMPT_COPY}" \
+    --predict ${NPREDICT} \
     --ignore-eos \
     --no-mmap \
     2>&1 | tee \${temp_file}
