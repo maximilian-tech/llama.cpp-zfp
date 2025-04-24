@@ -227,34 +227,79 @@ runtime_stats_filtered = runtime_stats[
 groups = runtime_stats_filtered["group"].unique()
 
 #fig, ax = plt.subplots(figsize=(12, 6))
-fig, ax = plt.subplots(figsize=(5.5, 3.8), dpi=250)#fig, ax = plt.subplots(figsize=(12, 6))
-bar_width = 0.15
-# Compute offsets for each group.
-offsets = {grp: (i - (len(groups)-1)/2) * bar_width for i, grp in enumerate(groups)}
+# fig, ax = plt.subplots(figsize=(5.5, 3.8), dpi=250)#fig, ax = plt.subplots(figsize=(12, 6))
+# bar_width = 0.15
+# # Compute offsets for each group.
+# offsets = {grp: (i - (len(groups)-1)/2) * bar_width for i, grp in enumerate(groups)}
+#
+# for pattern, grp in zip(patterns,groups):
+#
+#     sub = runtime_stats_filtered[runtime_stats_filtered["group"] == grp]
+#     pos = np.array([ncore_values.index(n) for n in sub["ncore"]]) + offsets[grp]
+#     ax.bar(pos, sub["eval_time_median"]/1000, bar_width,
+#            #yerr=[sub["time_err_low"], sub["time_err_high"]],
+#            capsize=5, label=grp, alpha=0.7,hatch=pattern)
+#
+# ref_scale_x = np.arange(1, 5.05, 1/24, ) - 1 + 0.3 #np.arange(24, 96, 1) / 10
+# ref_scale_y = 24*3800/1000 / np.arange(1, 5.05, 1/24)
+# ax.plot(ref_scale_x, ref_scale_y, linestyle="-", color="k", label="Reference: linear scaling")
+#
+#
+# ax.set_yscale('log')
+# ax.set_xticks(np.arange(len(ncore_values)))
+# ax.set_xticklabels(ncore_values)
+# ax.set_xlabel("Number of Threads")
+# ax.set_yticks([x/1000 for x in [100, 200, 1000, 3000, 12000]])
+# ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos: f"{x:g}"))
+# ax.set_ylabel("Time per token [s]")
+# ax.set_title("Runtime per decode token for Llama-3.1-8B")
+# ax.legend(ncol=1, fontsize="small", loc='upper right')
+# ax.grid(True, linestyle='--', linewidth=0.5)
+# plt.tight_layout()
+# plt.show()
 
-for pattern, grp in zip(patterns,groups):
 
+# assume groups = ["A","B",…], patterns same length, and ncore_values = [1,2,3,4]
+ncores = np.array(ncore_values, dtype=float)
+
+# set bar_width to 15% of the ncore‐spacing
+bar_width = (ncores[1] - ncores[0]) * 0.15
+
+# compute offsets in the same units
+offsets = {
+    grp: (i - (len(groups)-1)/2) * bar_width
+    for i, grp in enumerate(groups)
+}
+
+fig, ax = plt.subplots(figsize=(5.5, 3.8), dpi=250)
+
+for pattern, grp in zip(patterns, groups):
     sub = runtime_stats_filtered[runtime_stats_filtered["group"] == grp]
-    pos = np.array([ncore_values.index(n) for n in sub["ncore"]]) + offsets[grp]
-    ax.bar(pos, sub["eval_time_median"]/1000, bar_width,
-           #yerr=[sub["time_err_low"], sub["time_err_high"]],
-           capsize=5, label=grp, alpha=0.7,hatch=pattern)
+    # use actual ncore values + offset
+    x = sub["ncore"].values + offsets[grp]
+    y = sub["eval_time_median"] / 1000
+    ax.bar(x, y, bar_width,
+           capsize=5, label=grp, alpha=0.7, hatch=pattern)
 
-ref_scale_x = np.arange(1, 4.05, 1/24, ) - 1 + 0.3 #np.arange(24, 96, 1) / 10
-ref_scale_y = 3800/1000 / np.arange(1, 4.05, 1/24)
-ax.plot(ref_scale_x, ref_scale_y, linestyle="-", color="k", label="Reference: linear scaling")
+# reference line for linear scaling
+# here we span the same ncore range with fine sampling
+ref_n = np.linspace(ncores.min(), ncores.max(), 100)
+ref_scale_y = 24*(3800-500)/1000 / ref_n
+ax.plot(ref_n + 7, ref_scale_y, "-", color="k", label="Reference: linear scaling")
 
-
+# styling
 ax.set_yscale('log')
-ax.set_xticks(np.arange(len(ncore_values)))
-ax.set_xticklabels(ncore_values)
+ax.set_xticks(ncores)
+ax.set_xticklabels(ncores.astype(int))
 ax.set_xlabel("Number of Threads")
-ax.set_yticks([x/1000 for x in [100, 200, 1000, 3000, 12000]])
-ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos: f"{x:g}"))
 ax.set_ylabel("Time per token [s]")
+ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, pos: f"{x:g}"))
+
 ax.set_title("Runtime per decode token for Llama-3.1-8B")
 ax.legend(ncol=1, fontsize="small", loc='upper right')
 ax.grid(True, linestyle='--', linewidth=0.5)
 plt.tight_layout()
 #plt.show()
+
+
 plt.savefig("runtime_decode-8B.pdf", transparent=True)
