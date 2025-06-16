@@ -125,6 +125,7 @@ def plot_summary_ppl(df):
     plt.tight_layout()
     #plt.show()
     plt.savefig("overview_8B_70B.pdf",transparent=True,dpi=300)
+    plt.savefig("overview_8B_70B.png", transparent=True, dpi=300)
     plt.close()
 
 
@@ -189,6 +190,7 @@ def plot_zfp_8b(df):
     plt.tight_layout()
     #plt.show()
     plt.savefig("overview_8B.pdf",transparent=True,dpi=300)
+    plt.savefig("overview_8B.png", transparent=True, dpi=300)
     plt.close()
 
 
@@ -248,6 +250,7 @@ def plot_zfp_8b_chunk(df):
     plt.tight_layout()
     #plt.show()
     plt.savefig("overview_8B_zfp_chunksize.pdf",transparent=True,dpi=300)
+    plt.savefig("overview_8B_zfp_chunksize.png", transparent=True, dpi=300)
     plt.close()
 
 
@@ -313,6 +316,7 @@ def plt_8b_hellaswag_imatrix(df):
     plt.tight_layout()
     #plt.show()
     plt.savefig("overview_8B_hellaswag.pdf",transparent=True,dpi=300)
+    plt.savefig("overview_8B_hellaswag.png", transparent=True, dpi=300)
     plt.close()
 if __name__ == "__main__":
     df = pd.read_csv("all_data.csv")

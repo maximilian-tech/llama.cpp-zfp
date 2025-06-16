@@ -145,6 +145,7 @@ def plot_overlay_multi(input_data):
 
     plt.tight_layout()
     plt.savefig("Llama-3.1-8B-tensor_compare_Q4_K_M_ZFP_Rate4.50:4.50_3.pdf", bbox_inches='tight', pad_inches=0.05, transparent=True)
+    plt.savefig("Llama-3.1-8B-tensor_compare_Q4_K_M_ZFP_Rate4.50:4.50_3.png", bbox_inches='tight', pad_inches=0.05, transparent=True)
     plt.show()
 
 if __name__ == "__main__":

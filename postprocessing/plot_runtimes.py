@@ -201,6 +201,8 @@ ax.grid(True, linestyle='--', linewidth=0.5)
 plt.tight_layout()
 #plt.show()
 plt.savefig("throughput-8B.pdf", transparent=True)
+plt.savefig("throughput-8B.png", transparent=True, dpi=350)
+
 plt.close()
 # -------------------------------
 # 5. Plot: Evaluation Runtime vs ncore for each group (grouped bar plot).
@@ -303,3 +305,4 @@ plt.tight_layout()
 
 
 plt.savefig("runtime_decode-8B.pdf", transparent=True)
+plt.savefig("runtime_decode-8B.png", transparent=True, dpi=350)
